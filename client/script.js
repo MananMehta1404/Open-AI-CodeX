@@ -51,11 +51,11 @@ function chatStripe(isAi, value, uniqueId) {
                 <div class = "chat">
                     <div class = "profile">
                         <img
-                            src = "${isAi ? bot : user}"
+                            src = ${isAi ? bot : user}
                             alt = "${isAi ? 'bot' : 'user'}"
                         />
                     </div>
-                    <div class = "message" id = "${uniqueId}">
+                    <div class = "message" id = ${uniqueId}>
                         ${value}
                     </div>
                 </div>
@@ -76,13 +76,44 @@ const handleSubmit = async (e) => {
 
     // bot's chatStripe
     const uniqueId = generateUniqueId();
-    chatContainer.innerHTML += chatStripe(true, '', uniqueId);  
+    chatContainer.innerHTML += chatStripe(true, "", uniqueId);  
 
+    // Scroll to the bottom of the chat container
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
+    // Get the bot's message div
     const messageDiv = document.getElementById(uniqueId);
 
     loader(messageDiv);
+
+    // Fetch data from the server -> bot's response
+    const response = await fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            prompt: data.get('prompt')
+        })
+    });
+
+    clearInterval(loadInterval);
+    messageDiv.innerHTML = "";
+
+    if(response.ok) {
+        const data = await response.json();
+        const parsedData = data.bot.trim();
+
+        typeText(messageDiv, parsedData);
+    }
+    else {
+        const err = await response.text();
+
+        messageDiv.innerHTML = "Something went wrong";
+        console.log(err);
+
+        alert(err);
+    }
 }
 
 form.addEventListener('submit', handleSubmit);
